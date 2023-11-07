@@ -19,7 +19,7 @@
  */
 
 
-const { Gio, GObject, St } = imports.gi;
+const { Gio, GLib, GObject, St } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -34,7 +34,7 @@ var TimeToLogIndicator = GObject.registerClass(
             // Pick an icon
             this.icon = new St.Icon({
                 style_class: 'system-status-icon',
-                icon_name: 'editor-symbolic'
+                icon_name: 'text-editor-symbolic'
             });
             this.actor.add_child(this.icon);
 
@@ -42,6 +42,46 @@ var TimeToLogIndicator = GObject.registerClass(
         }
 
         _createLogFile() {
+            const date = new Date();
+
+            const [minute, hour, month, day, year] = [
+              date.getMinutes().toString().padStart(2, "0"),
+              date.getHours().toString().padStart(2, "0"),
+              (date.getMonth() + 1).toString().padStart(2, "0"),
+              date.getDate().toString().padStart(2, "0"),
+              date.getFullYear(),
+            ];
+            const date_string = `${year}-${month}-${day}`;
+            const time_string = `${hour}${minute}`;
+
+            // TODO(TW): make this path configurable, default to home + Notes
+            const log_path = GLib.build_filenamev([
+              GLib.get_home_dir(),
+              `Notes/${date_string}.md`,
+            ]);
+
+            log(`Creating file ${log_path}`);
+
+            const log_file = Gio.File.new_for_path(log_path);
+
+            var file_stream;
+            var header = `\n\n## ${time_string}\n- `;
+
+            try {
+                file_stream = log_file.create(Gio.FileCreateFlags.NONE, null);
+                header = `# ${date_string}` + header;
+            }
+            // TODO: Is this try/catch necessary? If so, catch relevant error only.
+            catch (err) {
+                log(`File exists.`);
+                file_stream = log_file.append_to(Gio.FileCreateFlags.NONE, null);
+            }
+
+            file_stream.write(header, null);
+
+            file_stream.close(null);
+
+            // TODO: Launch note-taking app (Iotas).
         }
     }
 );
