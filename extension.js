@@ -81,7 +81,17 @@ var TimeToLogIndicator = GObject.registerClass(
 
             file_stream.close(null);
 
-            // TODO: Launch note-taking app (Iotas).
+            // Template from from https://gjs.guide/guides/gio/subprocesses.html#basic-usage
+            try {
+                const proc = Gio.Subprocess.new(
+                    // TODO: Make this configurable; Iotas preferred.
+                    ['gnome-text-editor', log_path],
+                    Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+                );
+            } catch (e) {
+                // TODO: Handle errors that are a result of the process failing to start.
+                logError(e);
+            }
         }
     }
 );
