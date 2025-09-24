@@ -1,36 +1,34 @@
-'use strict';
+import Adw from 'gi://Adw';
+import Gtk from 'gi://Gtk';
 
-const GLib = imports.gi.GLib;
-const Gtk = imports.gi.Gtk;
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-// It's common practice to keep GNOME API and JS imports in separate blocks
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+export default class TimeToLogPreferences extends ExtensionPreferences {
+    fillPreferencesWindow(prefsWindow) {
+        // Create a preferences page, with a single group
+        const prefsPage = new Adw.PreferencesPage({
+            title: _('General'),
+            icon_name: 'preferences-other-symbolic',
+        });
+        prefsWindow.add(prefsPage);
 
+        const prefsGroup = new Adw.PreferencesGroup({
+            title: _('Preferences'),
+        });
+        prefsPage.add(prefsGroup);
 
-// Like `extension.js` this is used for any one-time setup like translations.
-function init() {
-    log(`initializing ${Me.metadata.name} Preferences`);
+        // Create a preferences row
+        //window._settings = this.getSettings();
+        const notesDirRow = new Adw.EntryRow({
+            title: _('Notes directory')
+        });
+        prefsGroup.add(notesDirRow);
+
+/*
+        editorRow.connect('notify::selected', (widget) => {
+            window._settings.set_enum('text_editor', widget.selected);
+        });
+        */
+    }
 }
 
-
-// This function is called when the preferences window is first created to build
-// and return a Gtk widget. As an example we'll create and return a GtkLabel.
-function buildPrefsWidget() {
-    // This could be any GtkWidget subclass, although usually you would choose
-    // something like a GtkGrid, GtkBox or GtkNotebook
-    let prefsWidget = new Gtk.Label({
-        label: `${Me.metadata.name} version ${Me.metadata.version}`,
-        visible: true
-    });
-
-    // At the time buildPrefsWidget() is called, the window is not yet prepared
-    // so if you want to access the headerbar you need to use a small trick
-    GLib.timeout_add(0, () => {
-        let window = prefsWidget.get_toplevel();
-        let headerBar = window.get_titlebar();
-        headerBar.title = `${Me.metadata.name} Preferences`;
-    });
-
-    return prefsWidget;
-}
