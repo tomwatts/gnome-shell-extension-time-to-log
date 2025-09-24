@@ -3,7 +3,12 @@
   "description": "This extension puts an icon in the panel that when clicked, creates a new log file with appropriate headers in a configured log directory and opens the file ready for logging.",
   "uuid": "time-to-log@thermos",
   "shell-version": [
-    "43"
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48"
   ],
   "url": "https://github.com/tomwatts/gnome-shell-extension-time-to-log"
 }
