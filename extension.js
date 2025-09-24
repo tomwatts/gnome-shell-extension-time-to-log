@@ -1,5 +1,3 @@
-'use strict';
-
 /* extension.js
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,25 +16,63 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
-const { Gio, GLib, GObject, St } = imports.gi;
+let pillBox, statusArea, network, networkIcon;
+let _spacer = null;
+let _indicator = null;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
+export default class TimeToLogExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
+    }
 
-var TimeToLogIndicator = GObject.registerClass(
+    enable() {
+        log(`enabling ${this.metadata.name} version ${this.metadata.version}`);
+
+        if (!_indicator) {
+          _indicator = new TimeToLogIndicator();
+        }
+
+        Main.panel.addToStatusArea(`${this.metadata.name} Indicator`, _indicator);
+
+    }
+
+    disable() {
+        log(`disabling ${this.metadata.name} version ${this.metadata.version}`);
+
+        if (_indicator) {
+            _indicator.destroy();
+            _indicator = null;
+        }
+    }
+}
+
+const TimeToLogIndicator = GObject.registerClass(
+    {
+        GTypeName: "TimeToLogIndicator",
+    },
     class TimeToLogIndicator extends PanelMenu.Button {
         _init() {
-            super._init(0.0, `${Me.metadata.name} Indicator`, false);
+            super._init({
+                y_align: Clutter.ActorAlign.CENTER,
+                visible: false,
+            });
 
-            // Pick an icon
-            this.icon = new St.Icon({
+            this._icon = new St.Icon({
+                y_align: Clutter.ActorAlign.CENTER,
                 style_class: 'system-status-icon',
                 icon_name: 'text-editor-symbolic'
             });
-            this.actor.add_child(this.icon);
+
+            this.actor.add_child(this._icon);
 
             this.click = this.connect("button-release-event", this._createLogFile.bind(this));
         }
@@ -84,8 +120,8 @@ var TimeToLogIndicator = GObject.registerClass(
             // Template from from https://gjs.guide/guides/gio/subprocesses.html#basic-usage
             try {
                 const proc = Gio.Subprocess.new(
-                    // TODO: Make this configurable; Iotas preferred.
-                    ['gnome-text-editor', log_path],
+                    // TODO: Iotas has no filename argument; this would be nice
+                    ['flatpak', 'run', 'org.gnome.gitlab.cheywood.Iotas'],
                     Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
                 );
             } catch (e) {
@@ -96,30 +132,3 @@ var TimeToLogIndicator = GObject.registerClass(
     }
 );
 
-var indicator = null;
-
-class Extension {
-    constructor() {
-    }
-
-    enable() {
-        log(`enabling ${Me.metadata.name} version ${Me.metadata.version}`);
-
-        indicator = new TimeToLogIndicator();
-
-        Main.panel.addToStatusArea(`${Me.metadata.name} Indicator`, indicator);
-    }
-
-    disable() {
-        log(`disabling ${Me.metadata.name} version ${Me.metadata.version}`);
-
-        if (indicator !== null) {
-            indicator.destroy();
-            indicator = null;
-        }
-    }
-}
-
-function init() {
-    return new Extension();
-}
